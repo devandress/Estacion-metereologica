@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import logging
+import os
+from pathlib import Path
 
 from app.core.config import settings
 from app.core.database import init_db
@@ -41,8 +44,19 @@ async def startup_event():
 async def health_check():
     return {"status": "ok", "service": "weather-api"}
 
+# Mount static files (frontend)
+frontend_dir = Path(__file__).parent.parent.parent / "frontend"
+if frontend_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(frontend_dir / "js")), name="js")
+    logger.info(f"Static files mounted from {frontend_dir}")
+
 @app.get("/")
 async def root():
+    """Serve frontend index.html"""
+    index_file = Path(__file__).parent.parent.parent / "frontend" / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    # Fallback to API info
     return {
         "message": "Weather Station API",
         "docs": "/docs",
