@@ -45,16 +45,14 @@ async def health_check():
     return {"status": "ok", "service": "weather-api"}
 
 # Mount static files (frontend)
-# Frontend is at /app/frontend in Heroku, or ../frontend when running locally
-import os
-base_path = os.environ.get('APP_ROOT', os.getcwd())
-frontend_dir = Path(base_path) / "frontend"
+# Get the root directory: /app (in Heroku) or the project root (locally)
+main_file_dir = Path(__file__).parent  # /app/backend/app or ./backend/app
+backend_dir = main_file_dir.parent     # /app/backend or ./backend
+app_root = backend_dir.parent          # /app or .
+frontend_dir = app_root / "frontend"
 
-if not frontend_dir.exists():
-    # Try alternative path
-    frontend_dir = Path(__file__).parent.parent.parent / "frontend"
-
-logger.info(f"Base path: {base_path}")
+logger.info(f"Main file: {Path(__file__)}")
+logger.info(f"App root: {app_root}")
 logger.info(f"Frontend dir: {frontend_dir}")
 logger.info(f"Frontend exists: {frontend_dir.exists()}")
 
@@ -62,26 +60,25 @@ if frontend_dir.exists():
     js_dir = frontend_dir / "js"
     if js_dir.exists():
         app.mount("/static", StaticFiles(directory=str(js_dir)), name="js")
-        logger.info(f"Static JS files mounted from {js_dir}")
+        logger.info(f"✅ Static JS files mounted")
 
 @app.get("/")
 async def root():
     """Serve frontend index.html"""
-    base_path = os.environ.get('APP_ROOT', os.getcwd())
-    index_file = Path(base_path) / "frontend" / "index.html"
+    main_file_dir = Path(__file__).parent
+    backend_dir = main_file_dir.parent
+    app_root = backend_dir.parent
+    index_file = app_root / "frontend" / "index.html"
     
-    if not index_file.exists():
-        index_file = Path(__file__).parent.parent.parent / "frontend" / "index.html"
-    
-    logger.info(f"Attempting to serve: {index_file}")
+    logger.info(f"Serving root: {index_file}")
     logger.info(f"File exists: {index_file.exists()}")
     
     if index_file.exists():
-        logger.info(f"✅ Serving index.html from {index_file}")
+        logger.info(f"✅ Serving index.html")
         return FileResponse(str(index_file), media_type="text/html")
     
     # Fallback to API info
-    logger.warning("index.html not found, serving API info")
+    logger.warning("index.html not found")
     return {
         "message": "Weather Station API",
         "docs": "/docs",
