@@ -45,30 +45,33 @@ async def health_check():
     return {"status": "ok", "service": "weather-api"}
 
 # Mount static files (frontend)
-# In Heroku, the working directory is /app
-# The frontend folder is at /app/frontend relative to /app
-# When running from backend/main.py, we need to go up to parent, then to frontend
-import sys
-current_dir = Path(__file__).parent  # /app/backend/app
-app_root = current_dir.parent.parent  # /app
-frontend_dir = app_root / "frontend"
+# Frontend is at /app/frontend in Heroku, or ../frontend when running locally
+import os
+base_path = os.environ.get('APP_ROOT', os.getcwd())
+frontend_dir = Path(base_path) / "frontend"
 
-logger.info(f"App root: {app_root}")
+if not frontend_dir.exists():
+    # Try alternative path
+    frontend_dir = Path(__file__).parent.parent.parent / "frontend"
+
+logger.info(f"Base path: {base_path}")
 logger.info(f"Frontend dir: {frontend_dir}")
 logger.info(f"Frontend exists: {frontend_dir.exists()}")
 
 if frontend_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(frontend_dir / "js")), name="js")
-    logger.info(f"Static files mounted from {frontend_dir}")
-else:
-    logger.warning(f"Frontend directory not found at {frontend_dir}")
+    js_dir = frontend_dir / "js"
+    if js_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(js_dir)), name="js")
+        logger.info(f"Static JS files mounted from {js_dir}")
 
 @app.get("/")
 async def root():
     """Serve frontend index.html"""
-    current_dir = Path(__file__).parent
-    app_root = current_dir.parent.parent
-    index_file = app_root / "frontend" / "index.html"
+    base_path = os.environ.get('APP_ROOT', os.getcwd())
+    index_file = Path(base_path) / "frontend" / "index.html"
+    
+    if not index_file.exists():
+        index_file = Path(__file__).parent.parent.parent / "frontend" / "index.html"
     
     logger.info(f"Attempting to serve: {index_file}")
     logger.info(f"File exists: {index_file.exists()}")
