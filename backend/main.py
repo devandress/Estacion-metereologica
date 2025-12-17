@@ -45,13 +45,13 @@ async def health_check():
     return {"status": "ok", "service": "weather-api"}
 
 # Mount static files (frontend)
-# Get the root directory: /app (in Heroku) or the project root (locally)
-main_file_dir = Path(__file__).parent  # /app/backend/app or ./backend/app
-backend_dir = main_file_dir.parent     # /app/backend or ./backend
-app_root = backend_dir.parent          # /app or .
+# Path calculation:
+# __file__ = /app/backend/main.py (Heroku) or ./backend/main.py (local)
+# frontend should be at /app/frontend or ./frontend
+main_file_dir = Path(__file__).parent          # /app/backend or ./backend  
+app_root = main_file_dir.parent                # /app or .
 frontend_dir = app_root / "frontend"
 
-logger.info(f"Main file: {Path(__file__)}")
 logger.info(f"App root: {app_root}")
 logger.info(f"Frontend dir: {frontend_dir}")
 logger.info(f"Frontend exists: {frontend_dir.exists()}")
@@ -66,19 +66,15 @@ if frontend_dir.exists():
 async def root():
     """Serve frontend index.html"""
     main_file_dir = Path(__file__).parent
-    backend_dir = main_file_dir.parent
-    app_root = backend_dir.parent
+    app_root = main_file_dir.parent
     index_file = app_root / "frontend" / "index.html"
-    
-    logger.info(f"Serving root: {index_file}")
-    logger.info(f"File exists: {index_file.exists()}")
     
     if index_file.exists():
         logger.info(f"✅ Serving index.html")
         return FileResponse(str(index_file), media_type="text/html")
     
     # Fallback to API info
-    logger.warning("index.html not found")
+    logger.warning(f"index.html not found at {index_file}")
     return {
         "message": "Weather Station API",
         "docs": "/docs",
