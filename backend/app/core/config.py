@@ -2,8 +2,8 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    # Database
-    DATABASE_URL: str = "postgresql://user:password@localhost/weather_db"
+    # Database - Heroku provides DATABASE_URL, fallback to local
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/weather_db")
     
     # API
     API_TITLE: str = "Weather Station API"
@@ -12,11 +12,11 @@ class Settings(BaseSettings):
     
     # Server
     HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    PORT: int = int(os.getenv("PORT", 8000))
     RELOAD: bool = False
     
     # Security
-    CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8080", "*"]
+    CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", '["http://localhost:3000", "http://localhost:8080", "*"]').strip('[]').split(',') if isinstance(os.getenv("CORS_ORIGINS", '["*"]'), str) else ["*"]
     
     # Data retention (days)
     DATA_RETENTION_DAYS: int = 30
