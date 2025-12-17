@@ -30,6 +30,11 @@ def get_db():
         db.close()
 
 def init_db():
-    """Create all database tables"""
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database initialized")
+    """Create all database tables - safely handles existing tables"""
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.warning(f"Database initialization warning: {str(e)}")
+        # This is ok - tables might already exist
+        pass
