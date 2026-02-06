@@ -1,0 +1,263 @@
+# 🍓 RASPBERRY PI 8GB - GUÍA RÁPIDA
+
+**Tu proyecto está completamente optimizado para Raspberry Pi 8GB**
+
+---
+
+## ⚡ Instalación en 3 Pasos (5 minutos)
+
+### En tu Raspberry Pi:
+
+```bash
+# Paso 1: Descargar script automático
+curl -fsSL https://raw.githubusercontent.com/devandress/Estacion-metereologica/main/raspberry-pi-setup.sh -o setup.sh
+
+# Paso 2: Ejecutar script
+chmod +x setup.sh
+./setup.sh
+
+# El script instala automáticamente:
+# ✅ Docker y Docker Compose
+# ✅ Tu proyecto
+# ✅ Todas las dependencias
+# ✅ Inicia los servicios
+```
+
+**¡Listo!** Tu sistema estará en:
+- 🌐 Dashboard: `http://tu-rpi-ip:80`
+- 🔌 API: `http://tu-rpi-ip:8000`
+
+---
+
+## 📊 Verificar que Funciona
+
+```bash
+# Ver estado de servicios
+docker-compose ps
+
+# Ver consumo en tiempo real
+docker stats
+
+# Ver logs
+docker-compose logs -f
+```
+
+---
+
+## 🌐 Acceso Remoto (Cloudflare Tunnel)
+
+### Configuración Automática:
+
+```bash
+cd /home/pi/weather_app
+
+# Script de setup para Cloudflare
+chmod +x setup-cloudflare-rpi.sh
+./setup-cloudflare-rpi.sh
+
+# Te pedirá:
+# 1. Login en Cloudflare
+# 2. Nombre del tunnel
+# 3. Tu dominio Duck DNS
+# 4. ¡Listo! Acceso remoto sin abrir puertos
+```
+
+**URLs después de configurar:**
+- 🌐 Dashboard: `https://tu-dominio.duckdns.org`
+- 🔌 API: `https://api.tu-dominio.duckdns.org`
+
+---
+
+## 🎯 Optimizaciones Aplicadas
+
+### 1. Memoria - Uso Eficiente
+```
+PostgreSQL: 1GB límite
+Backend:   512MB límite  
+Nginx:     128MB límite
+─────────────────────────
+Total:     1.6GB en uso
+Disponible: 6.4GB libres ✅
+```
+
+### 2. CPU - 4 Cores Máximos
+```
+Gunicorn: 2 workers
+Threads:  2 por worker
+────────────────────
+Total: 4 hilos = 4 cores RPi ✅
+```
+
+### 3. Imágenes Docker Ligeras
+```
+python:3.11-slim    → 160MB
+postgres:15-alpine  → 200MB
+nginx:alpine        → 40MB
+────────────────────────────
+Total: 400MB vs 1.3GB estándar ✅
+```
+
+### 4. JSON 3x Más Rápido
+```
+orjson incluido → Serialización más rápida
+Menos CPU = Menos calor en RPi ✅
+```
+
+---
+
+## 📈 Rendimiento Esperado
+
+**En Reposo:**
+- RAM: 400-500MB
+- CPU: 5-10%
+- Temperatura: 35-40°C
+
+**Bajo Carga (20 requests/seg):**
+- RAM: 1.2-1.5GB
+- CPU: 30-50%
+- Response: 50-100ms
+
+**Capacidad Máxima:**
+- Requests concurrentes: 20-50
+- Datos por año en BD: ~2GB
+
+---
+
+## 🔧 Comandos Útiles
+
+```bash
+# Reiniciar servicios
+docker-compose restart
+
+# Ver logs en tiempo real
+docker-compose logs -f backend
+
+# Detener y parar
+docker-compose down
+
+# Actualizar proyecto
+cd ~/weather_app
+git pull origin main
+docker-compose build
+docker-compose up -d
+
+# Ver consumo de CPU/RAM
+docker stats --no-stream
+
+# Limpiar espacio (if needed)
+docker system prune -a
+```
+
+---
+
+## 📚 Documentación Completa
+
+Consulta estos archivos para más detalles:
+
+1. **RASPBERRY_PI_8GB_SETUP.md**
+   - Guía detallada de instalación
+   - Troubleshooting
+   - Escalado futuro
+
+2. **README_ESP32_SETUP.md**
+   - Configuración de sensores ESP32
+   - Código para cargar en ESP32
+   - Integración IoT
+
+3. **ESP32_CLOUDFLARE_DUCKDNS.md**
+   - Guía detallada de ESP32 + Cloudflare
+   - Conexión WiFi
+   - Envío de datos
+
+4. **README.md**
+   - Documentación general del proyecto
+   - API endpoints
+   - Arquitectura
+
+---
+
+## ❌ Si Algo Falla
+
+### No se inician los servicios
+```bash
+# Verificar logs
+docker-compose logs
+
+# Reintentar
+docker-compose down
+docker-compose up -d
+```
+
+### Consumo de memoria alto
+```bash
+# Ver qué está usando RAM
+docker stats
+
+# Reiniciar servicio problemático
+docker-compose restart [nombre-servicio]
+```
+
+### No hay conexión a internet
+```bash
+# Verificar red desde RPi
+ping -c 1 8.8.8.8
+
+# Reiniciar docker
+sudo systemctl restart docker
+docker-compose restart
+```
+
+---
+
+## ✅ Checklist Final
+
+```
+□ Raspberry Pi conectada a red
+□ SSH funcionando
+□ Script de setup ejecutado exitosamente
+□ docker-compose ps muestra todos en "Up"
+□ Dashboard accesible en http://rpi-ip
+□ API responde en http://rpi-ip:8000/api/stations/
+□ docker stats muestra consumo < 1.5GB
+□ Cloudflare Tunnel configurado (opcional)
+□ ESP32 enviando datos (opcional)
+```
+
+---
+
+## 🚀 Próximos Pasos
+
+1. **Conectar ESP32** (sensores meteorológicos)
+   - Ver [README_ESP32_SETUP.md](README_ESP32_SETUP.md)
+
+2. **Configurar Cloudflare Tunnel** (acceso remoto)
+   - Ver [ESP32_CLOUDFLARE_DUCKDNS.md](ESP32_CLOUDFLARE_DUCKDNS.md)
+
+3. **Monitoreo en tiempo real**
+   ```bash
+   docker stats --no-stream
+   watch -n 1 'docker stats --no-stream'
+   ```
+
+4. **Backups automáticos** (próximamente)
+
+---
+
+## 📞 Soporte
+
+- Proyecto: https://github.com/devandress/Estacion-metereologica
+- Issues: GitHub Issues
+- Documentación: Archivos .md en el proyecto
+
+---
+
+**¡Tu sistema de estación meteorológica está listo! 🎉**
+
+**Para iniciar:**
+```bash
+ssh pi@192.168.1.100
+cd ~/weather_app
+docker stats  # Ver que funcione
+```
+
+Accede a: **http://192.168.1.100**
