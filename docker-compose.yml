@@ -7,15 +7,27 @@ services:
       POSTGRES_USER: weather_user
       POSTGRES_PASSWORD: weather_secure_password
       POSTGRES_DB: weather_db
+      # Optimizaciones para Raspberry Pi
+      POSTGRES_INITDB_ARGS: "-c shared_buffers=256MB -c effective_cache_size=512MB -c work_mem=16MB"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    # Limitar recursos para Raspberry Pi 8GB
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '1'
+          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U weather_user"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   backend:
     build:
@@ -26,8 +38,20 @@ services:
       HOST: 0.0.0.0
       PORT: 8000
       RELOAD: "False"
+      # Optimización para Raspberry Pi
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
     ports:
       - "8000:8000"
+    # Limitar recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,8 +65,16 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ./frontend:/usr/share/nginx/html
+    # Limitar recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.2'
+          memory: 64M
     depends_on:
       - backend
     restart: unless-stopped

@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema (mínimas)
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 
 # Instalar dependencias Python
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --no-compile -r requirements.txt
 
 # Copiar aplicación
 COPY backend/app ./app
@@ -22,8 +22,13 @@ USER appuser
 
 EXPOSE 8000
 
-# Health check
+# Health check optimizado
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD python -c "import httpx; httpx.get('http://localhost:8000/health')"
+    CMD python -c "import httpx; httpx.get('http://localhost:8000/health')" || exit 1
 
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:8000", "--access-logfile", "-", "main:app"]
+# Gunicorn con workers optimizados para Raspberry Pi
+# 2 workers + 2 threads cada uno = máximo 4 procesos
+CMD ["gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", \
+     "--threads", "2", "--worker-tmp-dir", "/dev/shm", \
+     "-b", "0.0.0.0:8000", "--timeout", "120", "--access-logfile", "-", \
+     "--max-requests", "1000", "--max-requests-jitter", "100", "main:app"]

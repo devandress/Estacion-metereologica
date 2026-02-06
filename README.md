@@ -2,7 +2,8 @@
 
 **Versión:** 1.0 - Production Ready  
 **Fecha:** 19 de Diciembre de 2025  
-**Estado:** ✅ COMPLETADO
+**Estado:** ✅ COMPLETADO  
+**Optimizado para:** Raspberry Pi 4/5 con 8GB RAM
 
 ---
 
@@ -11,91 +12,178 @@
 1. [Inicio Rápido](#inicio-rápido)
 2. [Descripción del Proyecto](#descripción-del-proyecto)
 3. [Requisitos](#requisitos)
-4. [Instalación](#instalación)
-5. [Configuración](#configuración)
-6. [Arquitectura](#arquitectura)
-7. [API Endpoints](#api-endpoints)
-8. [Frontend](#frontend)
-9. [Raspberry Pi + Cloudflare](#raspberry-pi--cloudflare-tunnel)
-10. [ESP32 Configuration](#esp32-configuration)
-11. [Comandos Útiles](#comandos-útiles)
-12. [Troubleshooting](#troubleshooting)
+4. [Instalación Raspberry Pi](#instalación-raspberry-pi)
+5. [Instalación Docker](#instalación-docker)
+6. [Configuración](#configuración)
+7. [Arquitectura](#arquitectura)
+8. [API Endpoints](#api-endpoints)
+9. [Frontend](#frontend)
+10. [Cloudflare Tunnel](#cloudflare-tunnel)
+11. [ESP32 Configuration](#esp32-configuration)
+12. [Monitoreo y Mantenimiento](#monitoreo-y-mantenimiento)
+13. [Troubleshooting](#troubleshooting)
 
 ---
 
-## Inicio Rápido
+## 🚀 Inicio Rápido - Raspberry Pi 8GB
 
-### 3 Comandos esenciales:
+### Opción 1: Script Automático (Recomendado - 5 minutos)
 
 ```bash
-# 1. En Raspberry Pi (15 min)
-cd /home/pi/weather_station
-chmod +x setup_raspberry_optimized.sh
-./setup_raspberry_optimized.sh
+# En tu Raspberry Pi
+curl -fsSL https://raw.githubusercontent.com/devandress/Estacion-metereologica/main/raspberry-pi-setup.sh -o setup.sh
+chmod +x setup.sh
+./setup.sh
 
-# 2. Configurar Cloudflare (5 min)
-cloudflared tunnel login
-cloudflared tunnel create raspberry-weather
-cloudflared tunnel route dns raspberry-weather tu-dominio.com
-sudo systemctl start weather-tunnel
-
-# 3. Probar en laptop (5 min)
-python3 fake_weather_terminal.py https://tu-dominio.com
+# ¡Listo! Accede a http://tu-rpi-ip
 ```
 
-**Resultado:** Sistema completamente en vivo en ~40 minutos
+### Opción 2: Instalación Manual
+
+```bash
+# 1. Actualizar sistema
+sudo apt-get update && sudo apt-get upgrade -y
+
+# 2. Instalar Docker
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+
+# 3. Clonar proyecto
+cd $HOME
+git clone https://github.com/devandress/Estacion-metereologica.git weather_app
+cd weather_app
+
+# 4. Configurar y lanzar
+docker-compose build
+docker-compose up -d
+
+# ✅ Sistema listo en http://localhost
+```
 
 ---
 
 ## Descripción del Proyecto
 
-Sistema de gestión de estaciones meteorológicas en tiempo real similar a Weather Underground. Diseñado para:
-- **Raspberry Pi 16GB** (eficiencia máxima)
+Sistema de gestión de estaciones meteorológicas en tiempo real. Diseñado para:
+- **Raspberry Pi 4/5 con 8GB RAM** (optimizado para bajo consumo)
 - **Acceso remoto sin abrir puertos** (Cloudflare Tunnel)
-- **Pruebas sin hardware** (simulador interactivo)
+- **Sensores IoT** (ESP32 con DHT22, BMP280, etc.)
+- **Dashboard web en tiempo real** con mapas y gráficos
 
-### Status Actual
+### Características
 
-| Componente | Estado | Detalles |
-|-----------|--------|----------|
-| Heroku | ✅ ACTIVO | https://weather-andy-7738-467e8e143413.herokuapp.com |
-| Frontend | ✅ ACTIVO | Tailwind CSS + Chart.js + Leaflet |
-| Backend | ✅ ACTIVO | FastAPI + PostgreSQL |
-| Raspberry Pi Setup | ✅ LISTO | Script automático (300+ líneas) |
-| Cloudflare Tunnel | ✅ LISTO | Documentación + scripts |
-| Simulador | ✅ LISTO | fake_weather_terminal.py (400+ líneas) |
-| Verificador | ✅ LISTO | verify_system.sh (200+ líneas) |
+✅ **Backend**
+- FastAPI con uvicorn optimizado
+- PostgreSQL con configuración RPi
+- 2 workers + 2 threads = máximo uso eficiente de 4 cores
+- Health checks automáticos
+
+✅ **Frontend**
+- Dashboard responsivo (Tailwind CSS)
+- Gráficos en tiempo real (Chart.js)
+- Mapa interactivo (Leaflet)
+- Sin dependencias pesadas
+
+✅ **DevOps**
+- Docker Compose con límites de memoria
+- Cloudflare Tunnel integrado
+- Scripts de setup automáticos
+- Logs y monitoreo
+
+✅ **IoT**
+- Código ESP32 optimizado
+- Envío de datos cada 30 segundos
+- WiFi + Cloudflare para acceso remoto
 
 ---
 
 ## Requisitos
 
-### Para Heroku (Nube):
-- Python 3.9+
-- Git
-- Cuenta Heroku
+### Hardware Recomendado
+- **Raspberry Pi 4** con 8GB RAM (mínimo 4GB)
+- **SD Card** 32GB+ (clase A1 o A2)
+- **Fuente 5V 3A** estable
+- **Conexión Ethernet** (o WiFi 5GHz)
 
-### Para Raspberry Pi (Local):
-- Raspberry Pi 4 o 5 con 16GB RAM
-- Raspberry Pi OS
-- Acceso SSH
-- WiFi conectada
-- 2GB espacio libre en disco
+### Software
+- **Raspberry Pi OS** 64-bit (Bookworm o superior)
+- **Docker 24+** y **Docker Compose 2+**
+- **Git**
 
-### Para ESP32 (Sensores):
-- Arduino IDE
-- ESP32 board support
-- Sensores: DHT22, BMP280, Anemómetro, Veleta, Pluviómetro
+### Sensores (Opcionales)
+- ESP32 microcontroller
+- DHT22 sensor
+- BMP280 sensor
+- Anemómetro
+- Pluviómetro
 
-### Dependencias Python:
+---
+
+## Instalación Raspberry Pi
+
+### Paso 1: Preparar Hardware
+
+```bash
+# Conectar Raspberry Pi a red
+# Usar Raspberry Pi Imager para instalar OS
+# Habilitar SSH desde raspi-config
+
+# SSH a la Raspberry Pi
+ssh pi@192.168.1.100
 ```
-fastapi==0.104.1
-uvicorn==0.24.0
-sqlalchemy==2.0.23
-psycopg2-binary==2.9.9
-gunicorn==21.2.0
-python-dotenv==1.0.0
+
+### Paso 2: Instalación Automática (Recomendado)
+
+```bash
+# Descargar y ejecutar script
+curl -fsSL https://raw.githubusercontent.com/devandress/Estacion-metereologica/main/raspberry-pi-setup.sh -o setup.sh
+chmod +x setup.sh
+./setup.sh
+
+# El script hará automáticamente:
+# - Actualizar sistema
+# - Instalar Docker
+# - Clonar repositorio
+# - Construir imágenes
+# - Lanzar servicios
+# - Mostrar URLs de acceso
 ```
+
+### Paso 3: Verificar Instalación
+
+```bash
+# Ver estado de servicios
+docker-compose ps
+
+# Ver consumo de recursos
+docker stats
+
+# Ver logs en tiempo real
+docker-compose logs -f
+```
+
+---
+
+## Instalación Docker
+
+### Construcción Optimizada
+
+```dockerfile
+# El Dockerfile está optimizado para RPi:
+- Imagen: python:3.11-slim (160MB vs 900MB)
+- Workers: 2 con 2 threads cada uno
+- Sin compilación de bytecode
+- Uso de JSON compilado (orjson)
+```
+
+### Límites de Memoria Aplicados
+
+| Servicio | Límite | Reserva | Objetivo |
+|----------|--------|---------|----------|
+| PostgreSQL | 1GB | 512MB | BD estable |
+| Backend | 512MB | 256MB | API rápida |
+| Nginx | 128MB | 64MB | Servicio web |
+| **Total** | **1.6GB** | **832MB** | Dejar 6.4GB libres |
 
 ---
 
