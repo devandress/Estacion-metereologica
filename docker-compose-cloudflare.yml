@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    container_name: weather-backend
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/weather
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+    command: python main.py
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - weather-network
+
+  # Frontend (HTTP Server)
+  frontend:
+    image: python:3.11-slim
+    container_name: weather-frontend
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+    ports:
+      - "8081:8081"
+    command: python -m http.server 8081
+    restart: unless-stopped
+    networks:
+      - weather-network
+
+  # Base de datos PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: weather-db
+    environment:
+      - POSTGRES_DB=weather
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - weather-network
+
+  # Cloudflare Tunnel
+  cloudflare:
+    image: cloudflare/cloudflared:latest
+    container_name: weather-cloudflare
+    command: tunnel run --token ${CLOUDFLARE_TOKEN}
+    environment:
+      - CLOUDFLARE_TOKEN=${CLOUDFLARE_TOKEN}
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - weather-network
+
+networks:
+  weather-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

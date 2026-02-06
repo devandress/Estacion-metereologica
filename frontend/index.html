@@ -21,18 +21,50 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     
     <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
         .transition-smooth { transition: all 0.3s ease-in-out; }
         .glass-effect { backdrop-filter: blur(10px); background: rgba(255,255,255,0.8); }
+        
         .stats-card { @apply bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 transition-smooth hover:shadow-lg hover:scale-105; }
-        .btn-primary { @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-smooth; }
-        .btn-secondary { @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-smooth; }
+        .weather-card { @apply bg-white rounded-xl shadow-md p-6 border-l-4 transition-smooth hover:shadow-xl hover:-translate-y-1; }
+        .weather-card.active { @apply border-l-green-500; }
+        .weather-card.inactive { @apply border-l-red-500; }
+        
+        .btn-primary { @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-smooth font-medium; }
+        .btn-secondary { @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-smooth font-medium; }
+        .btn-small { @apply px-3 py-1 rounded text-sm transition-smooth; }
+        
         .input-field { @apply w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 transition-smooth; }
         .table-row-hover { @apply hover:bg-blue-50 transition-smooth; }
+        
         .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50; }
-        .modal-content { @apply bg-white rounded-lg shadow-2xl max-w-md w-full mx-4; }
+        .modal-content { @apply bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden; }
+        
+        .station-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        
+        .badge { @apply inline-block px-3 py-1 rounded-full text-xs font-medium; }
+        .badge-success { @apply bg-green-100 text-green-800; }
+        .badge-error { @apply bg-red-100 text-red-800; }
+        .badge-warning { @apply bg-yellow-100 text-yellow-800; }
+        
+        .map-container { width: 100%; height: 600px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .leaflet-container { border-radius: 12px; }
+        
+        .weather-metric { @apply flex items-center gap-3 p-3 bg-gray-50 rounded-lg; }
+        .weather-metric i { @apply text-2xl text-blue-500; }
+        
+        .pulse-indicator { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .temperature-hot { color: #ef4444; }
+        .temperature-warm { color: #f97316; }
+        .temperature-cool { color: #3b82f6; }
+        .temperature-cold { color: #0284c7; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gradient-to-br from-gray-50 via-gray-100 to-gray-150 min-h-screen">
     <div id="app"></div>
     <script type="module" src="./js/main.js"></script>
 </body>

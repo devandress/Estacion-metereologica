@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Script para iniciar simuladores de estaciones meteorológicas
+
+echo "🌤️  Weather Station Simulators"
+echo "=============================="
+echo ""
+echo "Disponible en diferentes terminales:"
+echo ""
+echo "Opción 1: Una estación específica"
+echo "  python3 weather_simulator.py 0  # Madrid"
+echo "  python3 weather_simulator.py 1  # Barcelona"
+echo "  python3 weather_simulator.py 2  # Valencia"
+echo "  python3 weather_simulator.py 3  # Bilbao"
+echo "  python3 weather_simulator.py 4  # Sevilla"
+echo ""
+echo "Opción 2: Todas las estaciones a la vez"
+echo "  python3 weather_simulator.py"
+echo ""
+echo "Opción 3: Con intervalo personalizado (segundos)"
+echo "  python3 weather_simulator.py 0 5  # Cada 5 segundos"
+echo ""
+echo "Ejemplo:"
+echo "  Terminal 1: python3 weather_simulator.py 0"
+echo "  Terminal 2: python3 weather_simulator.py 1"
+echo "  Terminal 3: python3 weather_simulator.py 2"
+echo ""
