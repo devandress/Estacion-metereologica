@@ -1,0 +1,123 @@
+#!/bin/bash
+# Este es un archivo de referencia rápida, no es ejecutable
+# Úsalo como cheat sheet de comandos
+
+# 🚀 TABLA DE REFERENCIA RÁPIDA - ESTACIÓN METEOROLÓGICA
+
+## INICIAR EL SISTEMA
+bash start-rpi-optimizado.sh                    # Automático (recomendado)
+docker-compose up -d                           # Manual
+docker-compose build && docker-compose up -d  # Desde cero
+
+## ACCESO
+http://localhost:8081                          # Dashboard local
+http://192.168.1.100:8081                      # Desde otra PC (cambiar IP)
+curl http://localhost:8000/health              # Health check
+
+## DETENER/REINICIAR
+docker-compose down                            # Detener todo
+docker-compose restart                         # Reiniciar
+docker-compose logs -f backend                 # Ver logs en vivo
+
+## VERIFICACIÓN
+bash verificador.sh                            # Diagnóstico automático
+docker ps                                      # Ver contenedores corriendo
+docker-compose ps                              # Ver estado de servicios
+
+## BASE DE DATOS
+sqlite3 weather.db                             # Conectar a BD
+sqlite3 weather.db ".tables"                   # Ver tablas
+cp weather.db weather.db.backup                # Backup
+rm weather.db                                  # Limpiar (se recrea)
+
+## ESTADÍSTICAS
+docker stats                                   # Consumo CPU/RAM
+ls -lh weather.db                              # Tamaño de BD
+df -h                                          # Espacio disco
+
+## API ENDPOINTS
+GET  http://localhost:8000/api/stations/       # Listar estaciones
+POST http://localhost:8000/api/stations/       # Crear estación
+GET  http://localhost:8000/api/stations/{id}   # Ver estación
+POST http://localhost:8000/api/data/submit     # Enviar datos
+
+## PUERTOS
+8000  → API Backend
+8081  → Dashboard Frontend (nginx)
+8888  → Monitor (si está habilitado)
+
+## ARCHIVOS IMPORTANTES
+weather.db                      # Base de datos SQLite
+.env                           # Variables de entorno
+docker-compose.yml             # Configuración Docker
+Dockerfile.backend             # Imagen Docker
+backend/requirements.txt       # Dependencias Python
+frontend/index.html            # Dashboard HTML
+
+## SOLUCIONAR PROBLEMAS
+# Puerto 8000 ocupado
+lsof -i :8000
+kill -9 [PID]
+
+# Contenedor no inicia
+docker-compose logs backend
+
+# Permisos de Docker
+sudo usermod -aG docker $USER
+newgrp docker
+
+# BD corrupta
+rm weather.db
+docker-compose restart
+
+# Espacio bajo
+docker system prune
+docker image prune
+
+## VARIABLES DE ENTORNO (.env)
+DATABASE_URL=sqlite:///weather.db   # Cambia si quieres PostgreSQL
+HOST=0.0.0.0
+PORT=8000
+PYTHONUNBUFFERED=1
+
+## CURL EJEMPLOS
+
+# Crear estación
+curl -X POST http://localhost:8000/api/stations/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Mi Estación",
+    "location": "Calle Principal 123",
+    "latitude": 19.4326,
+    "longitude": -99.1332
+  }'
+
+# Enviar datos
+curl -X POST http://localhost:8000/api/data/submit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "station_id": "ID_AQUI",
+    "temperature": 25.5,
+    "humidity": 65
+  }'
+
+# Listar estaciones
+curl http://localhost:8000/api/stations/ | python -m json.tool
+
+## VERSIÓN & ESTADO
+Versión:    2.0 Optimizada
+Framework:  Flask + SQLAlchemy
+BD:         SQLite (archivo)
+Docker:     Multistage, slim
+RAM ideal:  300MB
+CPU ideal:  2-3%
+
+## DOCUMENTACIÓN
+INICIO_RAPIDO.md                    # Este archivo simplificado
+README_OPTIMIZADO.md                # Documentación técnica
+GUIA_REGISTRAR_ESTACION.md         # Guía usuario (sin tecnicismos)
+CAMBIOS_OPTIMIZACION.md            # Detalles de cambios
+ESP32_CLOUDFLARE_DUCKDNS.ino       # Código del sensor
+
+---
+Guarda este archivo como favorito en tu editor para referencia rápida

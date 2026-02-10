@@ -2,10 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependencias del sistema (mínimas)
-RUN apt-get update && apt-get install -y \
-    gcc \
-    postgresql-client \
+# Solo git (muy ligero, sin gcc)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar dependencias Python
@@ -15,6 +14,7 @@ RUN pip install --no-cache-dir --no-compile -r requirements.txt
 # Copiar aplicación
 COPY backend/app ./app
 COPY backend/main.py .
+COPY frontend ./frontend
 
 # Crear usuario no-root
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
@@ -22,12 +22,13 @@ USER appuser
 
 EXPOSE 8000
 
-# Health check optimizado
+# Health check
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD python -c "import httpx; httpx.get('http://localhost:8000/health')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
-# Gunicorn con workers optimizados para Raspberry Pi
-# 2 workers + 2 threads cada uno = máximo 4 procesos
+# Gunicorn optimizado para Raspberry Pi 8GB
+# 1 worker (Raspberry Pi) + threads para concurrencia
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--worker-class", "sync", "--threads", "4", "--timeout", "60", "--access-logfile", "-", "main:app"]
 CMD ["gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", \
      "--threads", "2", "--worker-tmp-dir", "/dev/shm", \
      "-b", "0.0.0.0:8000", "--timeout", "120", "--access-logfile", "-", \

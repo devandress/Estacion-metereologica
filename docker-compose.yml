@@ -1,18 +1,22 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     environment:
-      POSTGRES_USER: weather_user
-      POSTGRES_PASSWORD: weather_secure_password
-      POSTGRES_DB: weather_db
-      # Optimizaciones para Raspberry Pi
-      POSTGRES_INITDB_ARGS: "-c shared_buffers=256MB -c effective_cache_size=512MB -c work_mem=16MB"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # SQLite (sin PostgreSQL) = ligero
+      DATABASE_URL: sqlite:///./weather.db
+      HOST: 0.0.0.0
+      PORT: 8000
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
     ports:
-      - "5432:5432"
+      - "8000:8000"
+    volumes:
+      - ./weather.db:/app/weather.db
+      - ./backend:/app
     # Limitar recursos para Raspberry Pi 8GB
     deploy:
       resources:
@@ -23,31 +27,15 @@ services:
           cpus: '1'
           memory: 512M
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U weather_user"]
-      interval: 10s
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1"]
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
     restart: unless-stopped
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    environment:
-      DATABASE_URL: postgresql://weather_user:weather_secure_password@postgres/weather_db
-      HOST: 0.0.0.0
-      PORT: 8000
-      RELOAD: "False"
-      # Optimización para Raspberry Pi
-      PYTHONUNBUFFERED: "1"
-      PYTHONDONTWRITEBYTECODE: "1"
-    ports:
-      - "8000:8000"
-    # Limitar recursos
-    deploy:
-      resources:
-        limits:
-          cpus: '1.5'
+volumes:
+  # Base de datos en volumen persistente
+  weather_db:
           memory: 512M
         reservations:
           cpus: '0.5'
