@@ -1,9 +1,8 @@
-app = 'weathermx'
-primary_region = 'dfw'
-
-[build]
+app = 'weather-mx'
+primary_region = 'lax'
 
 [env]
+  DATABASE_URL = "sqlite:////data/weather.db"
   HOST = "0.0.0.0"
   PORT = "8000"
 
@@ -13,12 +12,12 @@ primary_region = 'dfw'
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
+  processes = ['app']
 
 [[vm]]
   memory = '256mb'
-  cpu_kind = 'shared'
   cpus = 1
 
-[mounts]
+[[mounts]]
   source = "weather_data"
   destination = "/data"
