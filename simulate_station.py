@@ -16,7 +16,7 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "https://weather-mx.fly.dev"
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ def ensure_station(station_id: str | None) -> dict:
                 raise
 
     station = api("POST", "/api/stations/", {
-        "name": "Simulador Demo",
+        "name": "est_norte_02",
         "location": "Ciudad de México, México",
         "latitude": 19.4326,
         "longitude": -99.1332,
