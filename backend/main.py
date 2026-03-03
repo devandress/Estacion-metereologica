@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 import logging
 from pathlib import Path
@@ -22,7 +22,7 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 init_db()
 
 app.register_blueprint(stations_routes.bp)
-app.register_blueprint(data_routes.bp)
+app.register_blueprint(data_routes.bp)  
 
 
 @app.route("/health", methods=["GET"])
@@ -30,14 +30,21 @@ def health_check():
     return jsonify({"status": "ok", "service": "weather-api"}), 200
 
 
+# Detecta la carpeta frontend tanto en local (backend/../frontend) como en Docker (/app/frontend)
+_here = Path(__file__).parent
+FRONTEND_DIR = _here / "frontend" if (_here / "frontend").exists() else _here.parent / "frontend"
+
+
 @app.route("/", methods=["GET"])
 def index():
-    """Fallback: sirve el frontend si existe (útil en dev sin nginx)"""
-    frontend_path = Path(__file__).parent.parent / "frontend" / "index.html"
-    if frontend_path.exists():
-        with open(frontend_path) as f:
-            return f.read()
+    if FRONTEND_DIR.exists():
+        return send_from_directory(FRONTEND_DIR, "index.html")
     return jsonify({"message": "Weather Station API", "endpoints": "/api/stations"})
+
+
+@app.route("/js/<path:filename>", methods=["GET"])
+def frontend_js(filename):
+    return send_from_directory(FRONTEND_DIR / "js", filename)
 
 
 @app.errorhandler(404)
