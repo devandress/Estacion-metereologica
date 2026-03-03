@@ -30,21 +30,31 @@ def health_check():
     return jsonify({"status": "ok", "service": "weather-api"}), 200
 
 
-# Detecta la carpeta frontend tanto en local (backend/../frontend) como en Docker (/app/frontend)
+# Detecta la carpeta frontend — prueba múltiples rutas
 _here = Path(__file__).parent
-FRONTEND_DIR = _here / "frontend" if (_here / "frontend").exists() else _here.parent / "frontend"
+FRONTEND_DIR = next(
+    (p for p in [
+        _here / "frontend",           # Docker: /app/frontend
+        _here.parent / "frontend",    # Local dev: weather_app/frontend
+        Path("/app/frontend"),        # Fallback absoluto Docker
+    ] if p.exists()),
+    None
+)
+logger.info(f"Frontend dir: {FRONTEND_DIR}")
 
 
 @app.route("/", methods=["GET"])
 def index():
-    if FRONTEND_DIR.exists():
+    if FRONTEND_DIR and FRONTEND_DIR.exists():
         return send_from_directory(FRONTEND_DIR, "index.html")
-    return jsonify({"message": "Weather Station API", "endpoints": "/api/stations"})
+    return jsonify({"message": "Weather Station API", "endpoints": "/api/stations", "frontend_dir": str(FRONTEND_DIR)})
 
 
 @app.route("/js/<path:filename>", methods=["GET"])
 def frontend_js(filename):
-    return send_from_directory(FRONTEND_DIR / "js", filename)
+    if FRONTEND_DIR:
+        return send_from_directory(FRONTEND_DIR / "js", filename)
+    return jsonify({"detail": "Not found"}), 404
 
 
 @app.errorhandler(404)
