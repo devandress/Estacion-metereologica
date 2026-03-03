@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
-from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+def _now():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 from app.core.database import SessionLocal
 from app.models.station import WeatherStation, WeatherData
@@ -43,7 +45,7 @@ def submit_data():
         db.add(weather_data)
         
         # Actualizar last_data_time de la estación
-        station.last_data_time = datetime.utcnow()
+        station.last_data_time = _now()
         
         db.commit()
         db.refresh(weather_data)
@@ -66,7 +68,7 @@ def get_station_data(station_id):
         hours = request.args.get('hours', 24, type=int)
         limit = request.args.get('limit', 100, type=int)
         
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = _now() - timedelta(hours=hours)
         
         data = db.query(WeatherData).filter(
             WeatherData.station_id == station_id,

@@ -1,71 +1,68 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌤️ Weather Station - Dashboard Avanzado</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.0/build/global/luxon.min.js"></script>
-    
-    <!-- Leaflet for maps -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-    
-    <!-- Leaflet Clustering -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.Default.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/leaflet.markercluster.min.js"></script>
-    
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
-        .transition-smooth { transition: all 0.3s ease-in-out; }
-        .glass-effect { backdrop-filter: blur(10px); background: rgba(255,255,255,0.8); }
-        
-        .stats-card { @apply bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 transition-smooth hover:shadow-lg hover:scale-105; }
-        .weather-card { @apply bg-white rounded-xl shadow-md p-6 border-l-4 transition-smooth hover:shadow-xl hover:-translate-y-1; }
-        .weather-card.active { @apply border-l-green-500; }
-        .weather-card.inactive { @apply border-l-red-500; }
-        
-        .btn-primary { @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-smooth font-medium; }
-        .btn-secondary { @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-smooth font-medium; }
-        .btn-small { @apply px-3 py-1 rounded text-sm transition-smooth; }
-        
-        .input-field { @apply w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 transition-smooth; }
-        .table-row-hover { @apply hover:bg-blue-50 transition-smooth; }
-        
-        .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50; }
-        .modal-content { @apply bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden; }
-        
-        .station-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-        
-        .badge { @apply inline-block px-3 py-1 rounded-full text-xs font-medium; }
-        .badge-success { @apply bg-green-100 text-green-800; }
-        .badge-error { @apply bg-red-100 text-red-800; }
-        .badge-warning { @apply bg-yellow-100 text-yellow-800; }
-        
-        .map-container { width: 100%; height: 600px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .leaflet-container { border-radius: 12px; }
-        
-        .weather-metric { @apply flex items-center gap-3 p-3 bg-gray-50 rounded-lg; }
-        .weather-metric i { @apply text-2xl text-blue-500; }
-        
-        .pulse-indicator { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        
-        .temperature-hot { color: #ef4444; }
-        .temperature-warm { color: #f97316; }
-        .temperature-cool { color: #3b82f6; }
-        .temperature-cold { color: #0284c7; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeatherNet — Red Meteorológica</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            surface: '#0f172a',
+            card:    '#1e293b',
+            border:  '#334155',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+  <!-- Leaflet -->
+  <link  rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <link  rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.min.css" />
+  <link  rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.Default.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/leaflet.markercluster.min.js"></script>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+    /* Leaflet dark */
+    .leaflet-container { background: #1e293b; border-radius: 1rem; }
+    .leaflet-tile { filter: brightness(.75) saturate(.9); }
+
+    /* Chart tooltip */
+    .chartjs-tooltip { background: #1e293b !important; border: 1px solid #334155 !important; border-radius: .5rem !important; color: #e2e8f0 !important; }
+
+    /* Transitions */
+    .fade { animation: fadeIn .18s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+    /* Pulse badge */
+    .pulse { animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 via-gray-100 to-gray-150 min-h-screen">
-    <div id="app"></div>
-    <script type="module" src="./js/main.js"></script>
+<body>
+  <div id="app"></div>
+  <div id="modals"></div>
+  <script type="module" src="./js/main.js?v=8"></script>
 </body>
 </html>

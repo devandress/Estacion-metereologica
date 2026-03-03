@@ -6,26 +6,14 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     environment:
-      # SQLite (sin PostgreSQL) = ligero
-      DATABASE_URL: sqlite:///./weather.db
+      DATABASE_URL: sqlite:////data/weather.db
       HOST: 0.0.0.0
       PORT: 8000
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
-    ports:
-      - "8000:8000"
     volumes:
-      - ./weather.db:/app/weather.db
+      - weather_data:/data
       - ./backend:/app
-    # Limitar recursos para Raspberry Pi 8GB
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 1G
-        reservations:
-          cpus: '1'
-          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1"]
       interval: 30s
@@ -33,39 +21,45 @@ services:
       retries: 3
     restart: unless-stopped
 
-volumes:
-  # Base de datos en volumen persistente
-  weather_db:
-          memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-    restart: unless-stopped
-
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      NGINX_HOST: ${NGINX_HOST}
     volumes:
-      - ./frontend:/usr/share/nginx/html
-    # Limitar recursos
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 128M
-        reservations:
-          cpus: '0.2'
-          memory: 64M
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Los templates se procesan con envsubst → /etc/nginx/conf.d/
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./frontend:/usr/share/nginx/html:ro
+      - certbot_certs:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    # Renovar automáticamente cada 12 horas
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done'"
+    restart: unless-stopped
+
+  duckdns:
+    image: alpine
+    environment:
+      DUCKDNS_TOKEN: ${DUCKDNS_TOKEN}
+      DUCKDNS_DOMAIN: ${DUCKDNS_DOMAIN}
+    volumes:
+      - ./update-duckdns.sh:/update-duckdns.sh:ro
+    command: sh /update-duckdns.sh
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+  weather_data:
+  certbot_certs:
+  certbot_www:

@@ -1,6 +1,9 @@
 from sqlalchemy import Column, String, Float, DateTime, Boolean, Index, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
+
+def _utcnow():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 from app.core.database import Base
 
 class WeatherStation(Base):
@@ -18,8 +21,8 @@ class WeatherStation(Base):
     
     # Metadata
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow, index=True)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     
     # Relationships
     data_points = relationship("WeatherData", back_populates="station", cascade="all, delete-orphan")
@@ -55,7 +58,7 @@ class WeatherData(Base):
     rain_rate_in_per_hour = Column(Float, nullable=True)
     
     # Timestamp
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=_utcnow, index=True)
     
     # Relationships
     station = relationship("WeatherStation", back_populates="data_points")

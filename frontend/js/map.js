@@ -18,8 +18,8 @@ export function initMap(containerId = "map-container", stations = []) {
         return null;
     }
     
-    // Create map centered on Europe
-    map = L.map(containerId).setView([40, 10], 4);
+    // Create map with a world view; fitMapBounds() will zoom to actual stations
+    map = L.map(containerId).setView([20, -40], 3);
     
     // Add multiple tile layer options
     const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -43,22 +43,37 @@ export function initMap(containerId = "map-container", stations = []) {
     };
     L.control.layers(baseMaps).addTo(map);
     
-    // Initialize marker cluster group
-    markerClusterGroup = L.markerClusterGroup({
-        maxClusterRadius: 80,
-        disableClusteringAtZoom: 15,
-        spiderfyOnMaxZoom: true,
-        showCoverageOnHover: true
-    });
+    // Initialize marker layer — use MarkerCluster if available, fall back to plain FeatureGroup
+    try {
+        if (typeof L.markerClusterGroup === 'function') {
+            markerClusterGroup = L.markerClusterGroup({
+                maxClusterRadius: 80,
+                disableClusteringAtZoom: 15,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: true
+            });
+        } else {
+            console.warn('MarkerCluster plugin not found, using plain layer group');
+            markerClusterGroup = L.featureGroup();
+        }
+    } catch (e) {
+        console.warn('MarkerCluster failed, using plain layer group:', e);
+        markerClusterGroup = L.featureGroup();
+    }
     map.addLayer(markerClusterGroup);
     
     // Add scale control
     L.control.scale().addTo(map);
     
     // Add stations immediately if provided
+    console.log(`[map] initMap called with ${stations.length} station(s)`);
     if (stations && stations.length > 0) {
         stations.forEach(station => {
-            addStationMarker(station);
+            try {
+                addStationMarker(station);
+            } catch (e) {
+                console.error(`[map] failed to add marker for ${station.name}:`, e);
+            }
         });
         fitMapBounds();
     }
@@ -109,22 +124,20 @@ export function addStationMarker(station, onClickCallback = null) {
         return null;
     }
     
-    // Create custom icon based on station status with better styling
+    // Create custom icon based on station status — pure inline styles (no Tailwind)
     const bgColor = station.active ? '#10b981' : '#ef4444';
     const icon = L.divIcon({
-        html: `
-            <div class="relative" style="width: 40px; height: 40px;">
-                <div class="absolute inset-0 flex items-center justify-center rounded-full text-white font-bold text-sm shadow-lg" 
-                     style="background: ${bgColor}; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-                    📍
-                </div>
-                <div class="absolute -top-1 -right-1 w-3 h-3 rounded-full" style="background: ${station.active ? '#10b981' : '#ef4444'};"></div>
-            </div>
-        `,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-        popupAnchor: [0, -40],
-        className: 'custom-marker'
+        html: `<div style="
+            width:14px;height:14px;
+            background:${bgColor};
+            border-radius:50%;
+            border:2px solid white;
+            box-shadow:0 2px 6px rgba(0,0,0,0.5);
+        "></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+        popupAnchor: [0, -10],
+        className: ''
     });
     
     // Create marker
@@ -152,11 +165,11 @@ export function addStationMarker(station, onClickCallback = null) {
                 <div style="margin-top: 8px; display: flex; gap: 4px;">
                     <button class="view-station-btn" data-station-id="${station.id}" 
                             style="flex: 1; padding: 6px; font-size: 12px; background-color: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        📊 Detalles
+                        Detalles
                     </button>
-                    <button class="zoom-station-btn" data-station-id="${station.id}" 
+                    <button class="zoom-station-btn" data-station-id="${station.id}"
                             style="flex: 1; padding: 6px; font-size: 12px; background-color: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        🔍 Zoom
+                        Zoom
                     </button>
                 </div>
             </div>
@@ -172,16 +185,7 @@ export function addStationMarker(station, onClickCallback = null) {
         }
     });
     
-    // Add hover effects
-    marker.on('mouseover', function() {
-        marker.openPopup();
-    });
-    
-    marker.on('mouseout', function() {
-        if (map && map.getZoom() < 13) {
-            marker.closePopup();
-        }
-    });
+    // Popup opens only on click, not hover (hover caused popup to disappear before clicking)
     
     markerClusterGroup.addLayer(marker);
     markersByStationId[station.id] = marker;
@@ -221,19 +225,25 @@ export function removeStationMarker(stationId) {
 }
 
 export function fitMapBounds() {
-    if (!map || markerClusterGroup.getLayers().length === 0) {
-        // Default view if no markers
-        map.setView([40, 10], 4);
+    if (!map) return;
+    // Build bounds from actual marker positions (more reliable than markerClusterGroup.getBounds())
+    const latlngs = Object.values(markersByStationId).map(m => m.getLatLng());
+    if (latlngs.length === 0) {
+        map.setView([20, -99], 5);
         return;
     }
-    
+    if (latlngs.length === 1) {
+        map.setView(latlngs[0], 11);
+        return;
+    }
     try {
-        const bounds = markerClusterGroup.getBounds();
+        const bounds = L.latLngBounds(latlngs);
         if (bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+            map.fitBounds(bounds, { padding: [60, 60], maxZoom: 12 });
         }
     } catch (e) {
         console.warn("Could not fit bounds:", e);
+        map.setView(latlngs[0], 8);
     }
 }
 
@@ -339,5 +349,14 @@ export function getStationMarker(stationId) {
 
 export function getAllMarkers() {
     return Object.values(markersByStationId);
+}
+
+export function destroyMap() {
+    if (map) {
+        map.remove();
+        map = null;
+        markerClusterGroup = null;
+        markersByStationId = {};
+    }
 }
 

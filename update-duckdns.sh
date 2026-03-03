@@ -1,22 +1,19 @@
-#!/bin/bash
+#!/bin/sh
 
 # Duck DNS Auto-update
-TOKEN="a64240d0-87b0-4173-a0ca-26b2117c7061"
-DOMAIN="weathermx"
+# Token y dominio deben venir de variables de entorno (.env)
+if [ -z "$DUCKDNS_TOKEN" ] || [ -z "$DUCKDNS_DOMAIN" ]; then
+    echo "ERROR: DUCKDNS_TOKEN y DUCKDNS_DOMAIN son requeridos"
+    exit 1
+fi
+
 LOG_FILE="/tmp/duckdns.log"
 
-echo "[$(date)] Duck DNS Update Service iniciado" >> $LOG_FILE
+echo "[$(date)] Duck DNS Update Service iniciado para ${DUCKDNS_DOMAIN}.duckdns.org" >> $LOG_FILE
 
 while true; do
-    # Obtener IP actual
-    CURRENT_IP=$(curl -s https://api.ipify.org)
-    
-    # Actualizar en Duck DNS
-    RESPONSE=$(curl -s "https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&ip=$CURRENT_IP")
-    
-    # Log
-    echo "[$(date)] IP: $CURRENT_IP | Response: $RESPONSE" >> $LOG_FILE
-    
-    # Esperar 5 minutos
+    CURRENT_IP=$(wget -qO- https://api.ipify.org)
+    RESPONSE=$(wget -qO- "https://www.duckdns.org/update?domains=${DUCKDNS_DOMAIN}&token=${DUCKDNS_TOKEN}&ip=${CURRENT_IP}")
+    echo "[$(date)] IP: ${CURRENT_IP} | Response: ${RESPONSE}" >> $LOG_FILE
     sleep 300
 done
